@@ -17,146 +17,178 @@ export default function Game() {
   const showCollisionAlert = () => {
     MySwal.fire({
       title: '⚠️ COLISIÓN DETECTADA',
-      html: '<div style="color: #22d3ee;">El robot ha chocado con un muro.<br/>Sistemas de navegación recalibrando...</div>',
+      html: `
+        <div style="line-height: 2; margin: 1rem 0;">
+          <p>EL ROBOT HA IMPACTADO<br/>CON UN OBSTÁCULO</p>
+          <p style="margin-top: 1rem; color: #ffff00;">SISTEMA BLOQUEADO</p>
+        </div>
+      `,
       icon: 'warning',
-      background: '#1e1b4b',
-      color: '#22d3ee',
-      iconColor: '#ec4899',
-      confirmButtonColor: '#7c3aed',
-      confirmButtonText: 'Entendido',
+      confirmButtonText: 'REINICIAR',
       customClass: {
-        popup: 'rounded-lg'
+        popup: 'swal2-popup',
+        title: 'swal2-title',
+        htmlContainer: 'swal2-html-container',
+        confirmButton: 'swal2-confirm'
       }
     });
   };
 
-  const handleCommand = (command) => {
-    const parts = command.trim().split(" ");
-    const action = parts[0];
-    const args = parts[1] ? parts[1].split(",") : [];
+  const executeCommand = (cmd) => {
+    const parts = cmd.split(" ");
+    const command = parts[0];
 
-    switch (action) {
-      case "PLACE_ROBOT":
-        const [row, col, facing] = args;
-        const r = parseInt(row);
-        const c = parseInt(col);
-        if (r >= 1 && r <= 5 && c >= 1 && c <= 5 && DIRECTIONS.includes(facing)) {
-          setRobot({ row: r, col: c, facing });
-        }
-        break;
-
-      case "PLACE_WALL":
-        const [wRow, wCol] = args.map(Number);
+    if (command === "PLACE_ROBOT") {
+      const coords = parts[1]?.split(",");
+      if (coords && coords.length === 3) {
+        const row = parseInt(coords[0]);
+        const col = parseInt(coords[1]);
+        const facing = coords[2];
         if (
-          wRow >= 1 && wRow <= 5 && wCol >= 1 && wCol <= 5 &&
-          (!robot || robot.row !== wRow || robot.col !== wCol) &&
-          !walls.some((w) => w.row === wRow && w.col === wCol)
+          row >= 1 &&
+          row <= 5 &&
+          col >= 1 &&
+          col <= 5 &&
+          DIRECTIONS.includes(facing)
         ) {
-          setWalls([...walls, { row: wRow, col: wCol }]);
+          const wallExists = walls.some((w) => w.row === row && w.col === col);
+          if (!wallExists) {
+            setRobot({ row, col, facing });
+            setReport("");
+          }
         }
-        break;
-
-      case "MOVE":
-        if (!robot) return;
-        let { row: mr, col: mc, facing: mf } = robot;
-        let newRow = mr;
-        let newCol = mc;
-
-        switch (mf) {
-          case "NORTH":
-            newRow = mr === 5 ? 1 : mr + 1;
-            break;
-          case "SOUTH":
-            newRow = mr === 1 ? 5 : mr - 1;
-            break;
-          case "EAST":
-            newCol = mc === 5 ? 1 : mc + 1;
-            break;
-          case "WEST":
-            newCol = mc === 1 ? 5 : mc - 1;
-            break;
+      }
+    } else if (command === "PLACE_WALL") {
+      const coords = parts[1]?.split(",");
+      if (coords && coords.length === 2) {
+        const row = parseInt(coords[0]);
+        const col = parseInt(coords[1]);
+        if (row >= 1 && row <= 5 && col >= 1 && col <= 5) {
+          const robotHere = robot && robot.row === row && robot.col === col;
+          const wallExists = walls.some((w) => w.row === row && w.col === col);
+          if (!robotHere && !wallExists) {
+            setWalls([...walls, { row, col }]);
+          }
         }
+      }
+    } else if (command === "MOVE") {
+      if (!robot) return;
+      let newRow = robot.row;
+      let newCol = robot.col;
 
-        if (walls.some((w) => w.row === newRow && w.col === newCol)) {
-          showCollisionAlert(); // 🎯 Alert cuando choca
-        } else {
-          setRobot({ row: newRow, col: newCol, facing: mf });
-          setMoveCount(moveCount + 1);
-        }
-        break;
+      if (robot.facing === "NORTH") newRow += 1;
+      else if (robot.facing === "SOUTH") newRow -= 1;
+      else if (robot.facing === "EAST") newCol += 1;
+      else if (robot.facing === "WEST") newCol -= 1;
 
-      case "LEFT":
-        if (!robot) return;
-        setRobot({
-          ...robot,
-          facing: DIRECTIONS[(DIRECTIONS.indexOf(robot.facing) + 3) % 4],
-        });
-        break;
+      const outOfBounds = newRow < 1 || newRow > 5 || newCol < 1 || newCol > 5;
+      const wallCollision = walls.some((w) => w.row === newRow && w.col === newCol);
 
-      case "RIGHT":
-        if (!robot) return;
-        setRobot({
-          ...robot,
-          facing: DIRECTIONS[(DIRECTIONS.indexOf(robot.facing) + 1) % 4],
-        });
-        break;
-
-      case "REPORT":
-        if (robot) {
-          setReport(`${robot.row},${robot.col},${robot.facing}`);
-        }
-        break;
+      if (outOfBounds || wallCollision) {
+        showCollisionAlert();
+      } else {
+        setRobot({ ...robot, row: newRow, col: newCol });
+        setMoveCount((prev) => prev + 1);
+      }
+    } else if (command === "LEFT") {
+      if (!robot) return;
+      const currentIndex = DIRECTIONS.indexOf(robot.facing);
+      const newIndex = (currentIndex - 1 + DIRECTIONS.length) % DIRECTIONS.length;
+      setRobot({ ...robot, facing: DIRECTIONS[newIndex] });
+    } else if (command === "RIGHT") {
+      if (!robot) return;
+      const currentIndex = DIRECTIONS.indexOf(robot.facing);
+      const newIndex = (currentIndex + 1) % DIRECTIONS.length;
+      setRobot({ ...robot, facing: DIRECTIONS[newIndex] });
+    } else if (command === "REPORT") {
+      if (!robot) return;
+      setReport(`${robot.row},${robot.col},${robot.facing}`);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-cyber-darker via-cyber-dark to-cyber-darker p-4 md:p-8 relative overflow-hidden">
+      {/* Scanline effect */}
+      <div className="scanline"></div>
+      
+      {/* Background grid */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `
+            linear-gradient(#00f0ff 1px, transparent 1px),
+            linear-gradient(90deg, #00f0ff 1px, transparent 1px)
+          `,
+          backgroundSize: '40px 40px'
+        }}></div>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-600 mb-2">
-            🤖 ROBOT GRID
+        <div className="text-center mb-6 md:mb-10">
+          <h1 className="text-2xl md:text-4xl text-cyber-blue mb-2 font-bold" 
+              style={{ textShadow: '0 0 10px #00f0ff, 0 0 20px #00f0ff' }}>
+            ROBOT CONTROL
           </h1>
-          <p className="text-cyan-300 text-sm tracking-widest">
+          <p className="text-cyber-pink text-xs md:text-sm font-bold" 
+             style={{ textShadow: '0 0 10px #ff0080' }}>
             SISTEMA DE NAVEGACIÓN AUTÓNOMA v2.0
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Tablero */}
-          <div className="bg-slate-800/50 backdrop-blur-sm p-6 rounded-2xl border-2 border-cyan-500/30">
-            <Board robot={robot} walls={walls} />
-            <div className="mt-4 flex justify-between text-cyan-400 text-sm">
-              <span>Movimientos: {moveCount}</span>
-              <span>Muros: {walls.length}</span>
+        {/* Stats Bar */}
+        <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-10">
+          <div className="border-2 border-cyber-green bg-black bg-opacity-70 p-3 md:p-4 text-center"
+               style={{ boxShadow: '0 0 15px #00ff41' }}>
+            <div className="text-cyber-green text-xs md:text-sm mb-1 font-bold" 
+                 style={{ textShadow: '0 0 8px #00ff41' }}>MOVIMIENTOS</div>
+            <div className="text-cyber-blue text-xl md:text-3xl font-bold" 
+                 style={{ textShadow: '0 0 10px #00f0ff' }}>{moveCount}</div>
+          </div>
+          <div className="border-2 border-cyber-purple bg-black bg-opacity-70 p-3 md:p-4 text-center"
+               style={{ boxShadow: '0 0 15px #bd00ff' }}>
+            <div className="text-cyber-purple text-xs md:text-sm mb-1 font-bold" 
+                 style={{ textShadow: '0 0 8px #bd00ff' }}>OBSTÁCULOS</div>
+            <div className="text-cyber-blue text-xl md:text-3xl font-bold" 
+                 style={{ textShadow: '0 0 10px #00f0ff' }}>{walls.length}</div>
+          </div>
+          <div className="border-2 border-cyber-pink bg-black bg-opacity-70 p-3 md:p-4 text-center"
+               style={{ boxShadow: '0 0 15px #ff0080' }}>
+            <div className="text-cyber-pink text-xs md:text-sm mb-1 font-bold" 
+                 style={{ textShadow: '0 0 8px #ff0080' }}>ESTADO</div>
+            <div className="text-cyber-green text-xs md:text-sm font-bold animate-flicker mt-1" 
+                 style={{ textShadow: '0 0 10px #00ff41' }}>
+              {robot ? "● ACTIVO" : "○ INACTIVO"}
             </div>
           </div>
+        </div>
 
-          {/* Panel de control */}
-          <div className="space-y-6">
-            <div className="bg-slate-800/50 backdrop-blur-sm p-6 rounded-2xl border-2 border-purple-500/30">
-              <h2 className="text-2xl font-bold text-purple-400 mb-4">
-                📡 PANEL DE CONTROL
-              </h2>
-              <CommandInput onCommand={handleCommand} />
-            </div>
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 items-start">
+          {/* Board */}
+          <div className="flex justify-center lg:justify-end">
+            <Board robot={robot} walls={walls} />
+          </div>
 
-            <div className="bg-slate-800/50 backdrop-blur-sm p-6 rounded-2xl border-2 border-cyan-500/30">
-              <RobotReport report={report} />
-            </div>
-
-            {/* Comandos */}
-            <div className="bg-slate-800/50 backdrop-blur-sm p-6 rounded-2xl border-2 border-purple-500/30">
-              <h3 className="text-lg font-bold text-purple-400 mb-3">
-                💻 COMANDOS
-              </h3>
-              <ul className="space-y-2 text-cyan-300 text-sm">
-                <li><code className="bg-slate-900 px-2 py-1 rounded">PLACE_ROBOT 3,3,NORTH</code></li>
-                <li><code className="bg-slate-900 px-2 py-1 rounded">PLACE_WALL 2,3</code></li>
-                <li><code className="bg-slate-900 px-2 py-1 rounded">MOVE</code></li>
-                <li><code className="bg-slate-900 px-2 py-1 rounded">LEFT / RIGHT</code></li>
-                <li><code className="bg-slate-900 px-2 py-1 rounded">REPORT</code></li>
-              </ul>
+          {/* Control Panel */}
+          <div className="space-y-5 md:space-y-6 max-w-md mx-auto lg:mx-0">
+            <CommandInput onCommand={executeCommand} />
+            <RobotReport report={report} />
+            
+            {/* Instructions */}
+            <div className="border-2 border-cyber-blue bg-black bg-opacity-70 p-4 md:p-5"
+                 style={{ boxShadow: '0 0 15px #00f0ff' }}>
+              <div className="text-cyber-pink text-xs md:text-sm mb-3 font-bold" 
+                   style={{ textShadow: '0 0 8px #ff0080' }}>
+                COMANDOS:
+              </div>
+              <div className="text-cyber-blue text-xs md:text-sm space-y-1 font-bold" 
+                   style={{ textShadow: '0 0 5px #00f0ff', lineHeight: '2' }}>
+                <code className="block">&gt; PLACE_ROBOT 3,3,NORTH</code>
+                <code className="block">&gt; PLACE_WALL 2,3</code>
+                <code className="block">&gt; MOVE</code>
+                <code className="block">&gt; LEFT / RIGHT</code>
+                <code className="block">&gt; REPORT</code>
+              </div>
             </div>
           </div>
         </div>
