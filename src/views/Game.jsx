@@ -124,7 +124,7 @@ export default function Game() {
 
       <div className="relative z-10 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-6 md:mb-10 flex justify-center">
+        <div className="text-center mb-12 md:mb-16 flex justify-center">
           <img 
             src="/toy-robot-logo.png" 
             alt="Toy Robot Logo" 
@@ -138,7 +138,7 @@ export default function Game() {
         </div>
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-10">
+        <div className="grid grid-cols-3 gap-3 md:gap-4 mb-12 md:mb-16">
           <div className="border-2 border-cyber-green bg-black bg-opacity-70 p-3 md:p-4 text-center"
                style={{ boxShadow: '0 0 15px #00ff41' }}>
             <div className="text-cyber-green text-xs md:text-sm mb-1 font-bold" 
@@ -165,14 +165,14 @@ export default function Game() {
         </div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-start">
           {/* Board */}
           <div className="flex justify-center lg:justify-end">
             <Board robot={robot} walls={walls} />
           </div>
 
           {/* Control Panel */}
-          <div className="space-y-5 md:space-y-6 max-w-md mx-auto lg:mx-0">
+          <div className="space-y-6 md:space-y-8 max-w-md mx-auto lg:mx-0">
             <CommandInput onCommand={executeCommand} />
             <RobotReport report={report} />
             
