@@ -20,6 +20,7 @@ export default {
       },
       fontFamily: {
         pixel: ['"Press Start 2P"', 'cursive'],
+        'space-mono': ['"Space Mono"', 'monospace'],
       },
       boxShadow: {
         'neon-blue': '0 0 10px #00f0ff, 0 0 20px #00f0ff, 0 0 30px #00f0ff',
