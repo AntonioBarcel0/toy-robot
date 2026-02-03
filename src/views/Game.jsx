@@ -124,15 +124,17 @@ export default function Game() {
 
       <div className="relative z-10 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-6 md:mb-10">
-          <h1 className="text-2xl md:text-4xl text-cyber-blue mb-2 font-bold" 
-              style={{ textShadow: '0 0 10px #00f0ff, 0 0 20px #00f0ff' }}>
-            ROBOT CONTROL
-          </h1>
-          <p className="text-cyber-pink text-xs md:text-sm font-bold" 
-             style={{ textShadow: '0 0 10px #ff0080' }}>
-            SISTEMA DE NAVEGACIÓN AUTÓNOMA v2.0
-          </p>
+        <div className="text-center mb-6 md:mb-10 flex justify-center">
+          <img 
+            src="/toy-robot-logo.png" 
+            alt="Toy Robot Logo" 
+            className="h-auto"
+            style={{ 
+              width: '350px',
+              margin: '80px',
+              filter: 'drop-shadow(0 0 10px #00f0ff) drop-shadow(0 0 20px #00f0ff)',
+            }}
+          />
         </div>
 
         {/* Stats Bar */}
